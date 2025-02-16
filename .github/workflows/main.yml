@@ -48,15 +48,38 @@ jobs:
     - name: SSH into Server
       uses: appleboy/ssh-action@master
       with:
-        host: "47.128.225.49"
-        username: "ubuntu"
-        key: "${{ secrets.SSH_PRIVATE_KEY }}"
+        host: 47.128.225.49
+        username: ubuntu
+        key: ${{ secrets.EC2_PRIVATE_KEY }}
         script: |
-          echo "Connected successfully"
+          echo "🚀 Connecting to server..."
+          
+          # Ensure the directory exists
+          mkdir -p /var/www/app
+          
+          # Navigate to the directory
           cd /var/www/app
-          git pull origin main
-          ./gradlew build
-          sudo systemctl restart app
+          
+          # Clone repository if missing
+          if [ ! -d ".git" ]; then
+            echo "📂 Cloning repository..."
+            git clone https://github.com/your-username/your-repo.git .
+          else
+            echo "🔄 Pulling latest changes..."
+            git pull origin main
+          fi
+          
+          # Build the Spring Boot application using Maven
+          echo "⚙️ Building application..."
+          mvn clean package -DskipTests
+          
+          # Stop running instance (if exists)
+          echo "🛑 Stopping existing application..."
+          pkill -f 'java -jar' || echo "No running instance found."
+          
+          # Start the new application in the background
+          echo "🚀 Starting new application..."
+          nohup java -jar target/*.jar > /dev/null 2>&1 &
 
     - name: Deploy to EC2
       uses: appleboy/ssh-action@master
