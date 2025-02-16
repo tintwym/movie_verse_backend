@@ -34,9 +34,9 @@ jobs:
 
     - name: Build and Push Docker Image
       run: |
-        docker build -t tintwaiyanmin97/movie_backend .
-        docker tag tintwaiyanmin97/movie_backend:latest tintwaiyanmin97/movie_backend:latest
-        docker push tintwaiyanmin97/movie_backend:latest
+        docker build -t tintwaiyanmin97/movie_verse_backend .
+        docker tag tintwaiyanmin97/movie_verse_backend:latest tintwaiyanmin97/movie_verse_backend:latest
+        docker push tintwaiyanmin97/movie_verse_backend:latest
 
     - name: Setup SSH Key
       run: |
@@ -62,8 +62,8 @@ jobs:
         username: "ubuntu"
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          docker pull tintwaiyanmin97/movie_backend:latest
-          docker stop movie_backend || true
-          docker rm movie_backend || true
+          docker pull tintwaiyanmin97/movie_verse_backend:latest
+          docker stop movie_verse_backend || true
+          docker rm movie_verse_backend || true
           docker system prune -af || true
-          docker run -d -p 9090:9090 --name movie_backend tintwaiyanmin97/movie_backend:latest
+          docker run -d -p 9090:9090 --name movie_verse_backend tintwaiyanmin97/movie_verse_backend:latest
