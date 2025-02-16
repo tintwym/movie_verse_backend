@@ -41,50 +41,24 @@ jobs:
     - name: Setup SSH Key
       run: |
         mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa  # Remove Windows line endings
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H 47.128.225.49 >> ~/.ssh/known_hosts
+        ssh-keyscan -H 13.212.9.188 >> ~/.ssh/known_hosts
 
     - name: SSH into Server
       uses: appleboy/ssh-action@master
       with:
-        host: 47.128.225.49
-        username: ubuntu
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        host: ${{ secrets.EC2_HOST }}
+        username: "ubuntu"
+        key: "${{ secrets.SSH_PRIVATE_KEY }}"
         script: |
-          echo "🚀 Connecting to server..."
-          
-          # Ensure the directory exists
-          mkdir -p /var/www/app
-          
-          # Navigate to the directory
-          cd /var/www/app
-          
-          # Clone repository if missing
-          if [ ! -d ".git" ]; then
-            echo "📂 Cloning repository..."
-            git clone https://github.com/your-username/your-repo.git .
-          else
-            echo "🔄 Pulling latest changes..."
-            git pull origin main
-          fi
-          
-          # Build the Spring Boot application using Maven
-          echo "⚙️ Building application..."
-          mvn clean package -DskipTests
-          
-          # Stop running instance (if exists)
-          echo "🛑 Stopping existing application..."
-          pkill -f 'java -jar' || echo "No running instance found."
-          
-          # Start the new application in the background
-          echo "🚀 Starting new application..."
-          nohup java -jar target/*.jar > /dev/null 2>&1 &
+          echo "Connected successfully"
+          # Run your commands here
 
     - name: Deploy to EC2
       uses: appleboy/ssh-action@master
       with:
-        host: "47.128.225.49"
+        host: ${{ secrets.EC2_HOST }}
         username: "ubuntu"
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
