@@ -50,7 +50,7 @@ jobs:
       with:
         host: 47.128.225.49
         username: ubuntu
-        key: ${{ secrets.EC2_PRIVATE_KEY }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
           echo "🚀 Connecting to server..."
           
