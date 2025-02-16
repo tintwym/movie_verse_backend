@@ -53,7 +53,10 @@ jobs:
         key: "${{ secrets.SSH_PRIVATE_KEY }}"
         script: |
           echo "Connected successfully"
-          # Run your commands here
+          cd /var/www/app
+          git pull origin main
+          ./gradlew build
+          sudo systemctl restart app
 
     - name: Deploy to EC2
       uses: appleboy/ssh-action@master
