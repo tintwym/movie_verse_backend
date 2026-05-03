@@ -14,7 +14,6 @@ import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Objects;
@@ -25,23 +24,17 @@ import java.util.stream.Collectors;
 @Service
 public class UserService implements IUserService {
     private final UserRepository userRepository;
-    private final MovieRatingRepository ratingRepository;
     private final RoleRepository roleRepository;
     private final GenreRepository genreRepository;
-    private final MovieRepository movieRepository;
     private final JwtUtility jwtUtility;
-    private final RestTemplate restTemplate;
     private final UserMapper userMapper;
 
     @Autowired
-    public UserService(UserMapper userMapper, UserRepository userRepository, MovieRatingRepository ratingRepository, RoleRepository roleRepository, GenreRepository genreRepository, MovieRepository movieRepository, JwtUtility jwtUtility, RestTemplate restTemplate) {
+    public UserService(UserMapper userMapper, UserRepository userRepository, RoleRepository roleRepository, GenreRepository genreRepository, JwtUtility jwtUtility) {
         this.userRepository = userRepository;
-        this.ratingRepository = ratingRepository;
         this.roleRepository = roleRepository;
         this.genreRepository = genreRepository;
-        this.movieRepository = movieRepository;
         this.jwtUtility = jwtUtility;
-        this.restTemplate = restTemplate;
         this.userMapper = userMapper;
     }
 
@@ -56,7 +49,6 @@ public class UserService implements IUserService {
             Role role = new Role();
             role.setName(roleName);
             roleRepository.save(role);
-            System.out.println("Created role: " + roleName);
         }
     }
 
@@ -73,7 +65,6 @@ public class UserService implements IUserService {
             Genre genre = new Genre();
             genre.setName(genreName);
             genreRepository.save(genre);
-            System.out.println("Created genre: " + genreName);
         }
     }
 
@@ -235,7 +226,6 @@ public class UserService implements IUserService {
 
     @Override
     public UserProfileRequest getUserProfile(String token){
-//        String username = jwtUtility.extractUsername(token);
         User user = getUserProfileFromToken(token);
 
         if (user == null) {
@@ -256,97 +246,6 @@ public class UserService implements IUserService {
                 genres
         );
     }
-
-    /**
-     * 获取用户交互数据，以 DataFrame 结构返回（列表 Map 结构）
-     */
-//    public List<Map<String, Object>> getUserInteractions(String token) {
-//        User user = getUserProfileFromToken(token);
-//
-//        if (user == null) {
-//            throw new RuntimeException("User not found or token is invalid.");
-//        }
-//
-//        List<Map<String, Object>> tableData = new ArrayList<>();
-//
-//        List<MovieRating> ratings = ratingRepository.findByUserId(user.getId());
-//        for (MovieRating rating : ratings) {
-//            Map<String, Object> row = new HashMap<>();
-//            row.put("user_id", rating.getUser().getId().toString());
-//            row.put("username", rating.getUser().getUsername());
-//            row.put("movie_name", rating.getMovie().getTitle());
-//            row.put("rating", Optional.ofNullable(rating.getRating()).orElse(-1.0));
-//
-//            // 统计喜欢次数（LIKE + FAVORITE）
-//            int favoriteCount = favoriteRepository.countByUserAndMovieAndCategory(rating.getUser(), rating.getMovie(), FavoriteCategory.LIKE)
-//                    + favoriteRepository.countByUserAndMovieAndCategory(rating.getUser(), rating.getMovie(), FavoriteCategory.FAVORITE);
-//            row.put("favorite", favoriteCount);
-//
-//
-////            row.put("search", 1);
-//            row.put("clicks", 1);
-//            int watchedCount = favoriteRepository.countByUserAndMovieAndCategory(rating.getUser(), rating.getMovie(), FavoriteCategory.VIEW);
-//            row.put("watched", watchedCount);
-//
-//
-//            // 计划观看次数（LIKE_BUT_UNWATCHED）
-//            int plannedCount = favoriteRepository.countByUserAndMovieAndCategory(rating.getUser(), rating.getMovie(), FavoriteCategory.LIKE_BUT_UNWATCHED);
-//            row.put("planned", plannedCount);
-//            tableData.add(row);
-//        }
-//
-//        List<Favorite> favorites = favoriteRepository.findByUser(user);
-//        for (Favorite favorite : favorites) {
-//            Movie movie = favorite.getMovie();
-//
-//            // 检查这个电影是否已经在评分列表中
-//            boolean alreadyExists = tableData.stream()
-//                    .anyMatch(row -> row.get("movie_name").equals(movie.getTitle()));
-//
-//            if (!alreadyExists) {
-//                Map<String, Object> row = new HashMap<>();
-//                row.put("user_id", user.getId().toString());
-//                row.put("username", user.getUsername());
-//                row.put("movie_name", movie.getTitle());
-//                row.put("rating", -1.0); // 没有评分
-//
-//                // 统计喜欢次数
-//                int favoriteCount = favoriteRepository.countByUserAndMovieAndCategory(user, movie, FavoriteCategory.LIKE)
-//                        + favoriteRepository.countByUserAndMovieAndCategory(user, movie, FavoriteCategory.FAVORITE);
-//                row.put("favorite", favoriteCount);
-//
-//                // 统计观看次数
-//                int watchedCount = favoriteRepository.countByUserAndMovieAndCategory(user, movie, FavoriteCategory.VIEW);
-//                row.put("watched", watchedCount);
-//                row.put("clicks", 1);
-////                row.put("search", 1);
-//                row.put("planned", 0);
-//
-//                tableData.add(row);
-//            }
-//        }
-//        return tableData;
-//    }
-
-//    public List<Map<String, Object>> getRecommendedMovies(String token) {
-//        List<Map<String, Object>> userInteractions = getUserInteractions(token);
-//
-//        // 配置 HTTP 请求
-//        String pythonApiUrl = "http://127.0.0.1:5000/recommend";  // Python 服务器地址
-//        HttpHeaders headers = new HttpHeaders();
-//        headers.setContentType(MediaType.APPLICATION_JSON);
-//        HttpEntity<List<Map<String, Object>>> request = new HttpEntity<>(userInteractions, headers);
-//
-//        // 发送请求到 Python 服务器
-//        ResponseEntity<Map> response = restTemplate.exchange(pythonApiUrl, HttpMethod.POST, request, Map.class);
-//
-//        // 解析 Python 返回的数据
-//        if (response.getStatusCode() == HttpStatus.OK) {
-//            return (List<Map<String, Object>>) response.getBody().get("recommendations");
-//        } else {
-//            throw new RuntimeException("Failed to fetch recommendations from Python API");
-//        }
-//    }
 
     @Transactional
     public boolean updateUserProfile(String token, UserProfileRequest updatedProfile) {

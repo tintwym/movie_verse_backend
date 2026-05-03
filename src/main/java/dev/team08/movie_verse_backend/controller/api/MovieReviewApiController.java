@@ -78,7 +78,6 @@ public class MovieReviewApiController {
     public ResponseEntity<?> getReviewCountByUser(@RequestHeader("Authorization") String token) {
         UUID userId = extractUserIdFromToken(token);
         int reviewCount = movieReviewService.getReviewCountByUserId(userId);
-        System.out.println(reviewCount);
         return ResponseEntity.ok(Map.of("reviewCount", reviewCount));
     }
 

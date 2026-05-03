@@ -177,7 +177,6 @@ public class UserMovieInteractionService implements IUserMovieInteractionService
 
             // 将交互数据转换为 JSON 格式
             HttpEntity<List<Map<String, Object>>> requestEntity = new HttpEntity<>(userInteractions, headers);
-            System.out.println(requestEntity);
             // 调用 Python API
             ResponseEntity<Map> response = restTemplate.exchange(
                     pythonApiUrl,
@@ -185,17 +184,12 @@ public class UserMovieInteractionService implements IUserMovieInteractionService
                     requestEntity,
                     Map.class
             );
-            System.out.println("Sending data to Python API: " + userInteractions);
-
             // 解析返回结果
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 return (List<String>) response.getBody().get("recommendations");
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("Sending data to Python API: " + userInteractions);
-
-            throw new RuntimeException("Failed to call Python API: " + e.getMessage());
+            throw new RuntimeException("Failed to call Python API", e);
         }
 
         return Collections.emptyList(); // 如果调用失败，返回空列表
