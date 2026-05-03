@@ -11,26 +11,32 @@ jobs:
 
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Verify Directory Structure
-      run: ls -l  # Show current directory structure
+      run: ls -l
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: "temurin"
+        java-version: "17"
+        cache: "maven"
 
     - name: Set up Docker
-      uses: docker/setup-buildx-action@v2
+      uses: docker/setup-buildx-action@v3
 
     - name: Login to Docker Hub
       run: echo "${{ secrets.DOCKER_HUB_PASS }}" | docker login -u "tintwaiyanmin97" --password-stdin
 
     - name: Build with Maven
       run: |
-        ls -l  # Check directory structure
-        if [ -f "pom.xml" ]; then
-          mvn clean install -DskipTests  # Run from root directory
-        else
+        if [ ! -f "pom.xml" ]; then
           echo "pom.xml not found! Exiting..."
           exit 1
         fi
+        chmod +x mvnw
+        ./mvnw --no-transfer-progress clean package -DskipTests
 
     - name: Build and Push Docker Image
       run: |
@@ -46,7 +52,7 @@ jobs:
         ssh-keyscan -H 13.212.9.188 >> ~/.ssh/known_hosts
 
     - name: SSH into Server
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@v1
       with:
         host: ${{ secrets.EC2_HOST }}
         username: "ubuntu"
@@ -56,7 +62,7 @@ jobs:
           # Run your commands here
 
     - name: Deploy to EC2
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@v1
       with:
         host: ${{ secrets.EC2_HOST }}
         username: "ubuntu"
@@ -66,4 +72,5 @@ jobs:
           docker stop movie_verse_backend || true
           docker rm movie_verse_backend || true
           docker system prune -af || true
-          docker run -d -p 9090:9090 --name movie_verse_backend tintwaiyanmin97/movie_verse_backend:latest
+          # Map host 9090 -> container 8080 (Spring Boot default in Dockerfile)
+          docker run -d -p 9090:8080 --name movie_verse_backend tintwaiyanmin97/movie_verse_backend:latest

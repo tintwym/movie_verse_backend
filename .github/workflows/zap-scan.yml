@@ -6,20 +6,27 @@ on:
     types:
       - completed
 
+# workflow_run jobs need read access to the triggering run's commit
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   dast_scan:
     runs-on: ubuntu-latest
+    # Only run DAST when deploy succeeded (skip on failure/cancelled)
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
-      # Checkout the repository
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Ensures full repo is checked out
+          fetch-depth: 0
+          # Default checkout on workflow_run is latest default branch, not the deploy commit
+          ref: ${{ github.event.workflow_run.head_sha }}
 
-      # Set up Docker
       - name: Set up Docker
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       # Docker login to pull ZAP image from Docker Hub
       - name: Docker login
@@ -45,3 +52,4 @@ jobs:
         with:
           name: zap-report
           path: ./zap_baseline_report.html
+          if-no-files-found: warn

@@ -15,47 +15,43 @@ jobs:
 
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
+
+    - name: Set up Python (Semgrep, before Maven)
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install and run Semgrep on source only
+      run: |
+        python -m pip install --upgrade pip
+        pip install "semgrep>=1.45.0"
+        mkdir -p reports
+        # Run before Maven so `target/` is not scanned; use p/java (stable) instead of `auto` (registry-heavy)
+        semgrep scan --config p/java --json src > reports/semgrep-report.json
 
     - name: Set up JDK 17
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '17'
+        cache: 'maven'
 
     - name: Verify Java Installation
-      run: java -version && echo $JAVA_HOME
-
-    - name: Cache Maven Dependencies
-      uses: actions/cache@v4
-      with:
-        path: ~/.m2
-        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-maven
+      run: java -version && echo "$JAVA_HOME"
 
     - name: Build with Maven (Skip Tests)
-      run: mvn clean install -DskipTests
-
-    - name: Install Semgrep
       run: |
-        pip install semgrep
-
-    - name: Run Semgrep Analysis
-      run: |
-        mkdir -p reports
-        semgrep scan --config=auto --json > reports/semgrep-report.json
+        chmod +x mvnw
+        ./mvnw --no-transfer-progress clean install -DskipTests
 
     - name: Run Security Check on Dependencies (OWASP Dependency Check)
-      env:
-        JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
       run: |
-        export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-        export PATH=$JAVA_HOME/bin:$PATH
         java -version
         mkdir -p reports
-        chmod -R 777 reports  # Ensure the directory has correct permissions
+        chmod -R 777 reports
         docker run --rm \
-          --volume $(pwd):/src \
+          --volume "$(pwd):/src" \
           owasp/dependency-check \
           --scan /src \
           --format HTML \
