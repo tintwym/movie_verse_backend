@@ -47,10 +47,13 @@ public class UserApiController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authorization token is missing or invalid");
         }
 
-        // Get the user from the JWT token
+        // `getUserFromToken` now returns null for expired / malformed / unknown
+        // tokens rather than throwing, so we have to translate that into a 401
+        // ourselves instead of shipping back `200 OK` with an empty body.
         User user = userService.getUserFromToken(token);
-
-        // Return the user and a 200 OK response
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         return ResponseEntity.ok(user);
     }
     

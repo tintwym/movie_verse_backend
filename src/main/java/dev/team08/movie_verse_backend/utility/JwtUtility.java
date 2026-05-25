@@ -1,6 +1,7 @@
 package dev.team08.movie_verse_backend.utility;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
@@ -70,14 +71,36 @@ public class JwtUtility {
 
     // Check if token needs refreshing
     public boolean shouldRefreshToken(String token) {
-        Date expiration = extractExpiration(token);
-        long timeToExpiration = expiration.getTime() - System.currentTimeMillis();
-        return timeToExpiration <= REFRESH_WINDOW;  // Token is within the refresh window
+        try {
+            Date expiration = extractExpiration(token);
+            long timeToExpiration = expiration.getTime() - System.currentTimeMillis();
+            return timeToExpiration <= REFRESH_WINDOW;  // Token is within the refresh window
+        } catch (JwtException | IllegalArgumentException e) {
+            // Malformed / expired / wrong-signature tokens cannot be refreshed.
+            return false;
+        }
     }
 
-    // Validate token
+    // Validate token. Expired, malformed, or wrong-signature tokens are simply
+    // "not valid" — they should never bubble an exception up to controllers,
+    // because that turns into a 500 Internal Server Error for the client when
+    // the correct response is a clean 401 Unauthorized.
     public boolean isTokenValid(String token, String username) {
-        final String extractedUsername = extractUsername(token);
-        return (extractedUsername.equals(username) && !isTokenExpired(token));
+        try {
+            final String extractedUsername = extractUsername(token);
+            return extractedUsername.equals(username) && !isTokenExpired(token);
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    // Null-safe accessor for callers (filters, services) that only need a
+    // username and don't want to wrap every call in their own try/catch.
+    public String extractUsernameSafe(String token) {
+        try {
+            return extractUsername(token);
+        } catch (JwtException | IllegalArgumentException e) {
+            return null;
+        }
     }
 }

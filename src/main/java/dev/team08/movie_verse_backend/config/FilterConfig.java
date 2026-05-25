@@ -18,9 +18,19 @@ public class FilterConfig {
 
     @Bean
     public FilterRegistrationBean<JwtAuthenticationFilter> jwtFilter() {
+        // NOTE: This filter is currently disabled. It was registered for
+        // `/api/orders/*`, a path pattern that doesn't exist in this app — so
+        // in practice it never matches and authentication for the real API
+        // happens at the controller layer via `userService.verifyToken` /
+        // `getUserFromToken`. We also intentionally do NOT register it for
+        // `/api/**` here, because the filter rejects every request without a
+        // valid Bearer token, which would break login and register too. If
+        // you want filter-level auth, add an allow-list for public endpoints
+        // inside `JwtAuthenticationFilter` first, then widen the pattern here.
         FilterRegistrationBean<JwtAuthenticationFilter> registrationBean = new FilterRegistrationBean<>();
         registrationBean.setFilter(jwtAuthenticationFilter);
-        registrationBean.addUrlPatterns("/api/orders/*");  // Apply the filter to all /api/products/* routes
+        registrationBean.addUrlPatterns("/api/__disabled__/*");
+        registrationBean.setEnabled(false);
         return registrationBean;
     }
 

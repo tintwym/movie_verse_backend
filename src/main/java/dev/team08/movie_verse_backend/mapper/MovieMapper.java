@@ -7,16 +7,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class MovieMapper {
 
-    private final GenreRepository genreRepository;
     private final MovieRepository movieRepository;
-    private final UserRepository userRepository;
 
-    // 注入需要的 Repository
-    public MovieMapper(GenreRepository genreRepository, 
-                       MovieRepository movieRepository, UserRepository userRepository) {
-        this.genreRepository = genreRepository;
+    public MovieMapper(MovieRepository movieRepository) {
         this.movieRepository = movieRepository;
-        this.userRepository = userRepository;
     }
 
 //    public static MovieRequest toMovieRequest(Movie movie) {

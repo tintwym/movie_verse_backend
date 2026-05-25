@@ -1,30 +1,22 @@
 package dev.team08.movie_verse_backend.filter;
 
 import jakarta.servlet.*;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 
+// This filter is kept for backwards compatibility with WebConfig#sessionTimeoutFilter
+// but is intentionally a pass-through. Authentication and session lifetime are
+// handled entirely by JWTs (see JwtUtility / UserService), and the previous
+// implementation guarded its redirect with `!requestURI.contains("/")` — a
+// condition that is **always false** for any real URI, so the redirect never
+// fired and the filter has always been a no-op in practice. Removing it
+// outright would require touching WebConfig's registration too; leaving it as
+// an honest pass-through keeps wiring stable without lying about what it does.
 public class SessionTimeoutFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
-        HttpServletResponse httpResponse = (HttpServletResponse) response;
-        HttpSession session = httpRequest.getSession(false);
-
-        // Exclude specific URLs like login and registration from being checked for session timeout
-        String requestURI = httpRequest.getRequestURI();
-
-        // Allow access to login and other public pages
-        if (!requestURI.contains("/") && (!requestURI.contains("/auth/login") && (!requestURI.contains("/auth/register") && (session == null || session.getAttribute("username") == null)))) {
-            httpResponse.sendRedirect(httpRequest.getContextPath() + "/auth/login");
-            return;  // Return immediately to stop the chain
-        }
-
-        chain.doFilter(request, response);  // Continue request chain if session is valid or on public pages
+        chain.doFilter(request, response);
     }
 
     @Override

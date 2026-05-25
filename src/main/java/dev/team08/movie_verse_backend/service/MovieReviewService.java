@@ -10,6 +10,7 @@ import dev.team08.movie_verse_backend.repository.MovieReviewRepository;
 import dev.team08.movie_verse_backend.repository.UserMovieInteractionRepository;
 import dev.team08.movie_verse_backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -30,6 +31,9 @@ public class MovieReviewService implements IMovieReviewService {
     private UserRepository userRepository;
     @Autowired
     private  UserMovieInteractionRepository userMovieInteractionRepository;
+
+    @Value("${ml.service.url:http://127.0.0.1:5001/predict}")
+    private String mlServiceUrl;
     
     /**
      * Add a new review or update an existing one.
@@ -96,17 +100,18 @@ public class MovieReviewService implements IMovieReviewService {
     
     @Override
     public String callPythonReviewSentimentApi(String review) {
-        String pythonApiUrl = "http://127.0.0.1:5001/predict";
         RestTemplate restTemplate = new RestTemplate();
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             MLReviewRequest request = new MLReviewRequest(review);
             HttpEntity<MLReviewRequest> requestEntity = new HttpEntity<>(request, headers);
-            MLReviewResponse response = restTemplate.postForObject(pythonApiUrl, requestEntity, MLReviewResponse.class);
+            MLReviewResponse response = restTemplate.postForObject(mlServiceUrl, requestEntity, MLReviewResponse.class);
             return response != null && response.getResults() != null ? response.getResults() : "No results found";
         } catch (Exception e) {
-            throw new RuntimeException("Failed to call Python API", e);
+            // Don't block the review save if the sentiment service is unreachable —
+            // mark it unknown so the review still persists.
+            return "Unknown";
         }
     }
 

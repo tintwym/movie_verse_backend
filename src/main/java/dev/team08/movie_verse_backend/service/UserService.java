@@ -70,45 +70,55 @@ public class UserService implements IUserService {
 
     @Override
     public boolean verifyToken(String token, String usernameJson) {
-        // Remove the "Bearer " prefix from the token
+        // An expired / malformed token, or bad JSON, is simply "not valid".
+        // Previously this method wrapped every exception in a RuntimeException,
+        // which Spring then turned into a 500 Internal Server Error for the
+        // client. The correct behaviour is to return `false` so the controller
+        // can respond with a clean 401 Unauthorized.
+        if (token == null) {
+            return false;
+        }
         token = token.replace("Bearer ", "");
 
         try {
-            // Convert the JSON string to extract the actual username
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode jsonNode = objectMapper.readTree(usernameJson);
-
-            // Extract the "username" field from the JSON
-            String username = jsonNode.get("username").asText();
-
-            // Check if the token is valid using the extracted username
+            JsonNode usernameNode = jsonNode.get("username");
+            if (usernameNode == null) {
+                return false;
+            }
+            String username = usernameNode.asText();
             return jwtUtility.isTokenValid(token, username);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to extract username from JSON", e);
+            return false;
         }
     }
 
     @Override
     public User getUserFromToken(String token) {
-        // Remove the "Bearer " prefix from the token
+        if (token == null) {
+            return null;
+        }
         token = token.replace("Bearer ", "");
 
-        // Get the username from the token
-        String username = jwtUtility.extractUsername(token);
-
-        // Find the user by username
+        String username = jwtUtility.extractUsernameSafe(token);
+        if (username == null) {
+            return null;
+        }
         return userRepository.findByUsername(username);
     }
 
     @Override
     public User getUserProfileFromToken(String token) {
-        // 移除 token 中的 "Bearer " 部分
+        if (token == null) {
+            return null;
+        }
         token = token.replace("Bearer ", "");
 
-        // 获取用户名
-        String username = jwtUtility.extractUsername(token);
-
-        // 获取用户信息，包含 favoriteGenres
+        String username = jwtUtility.extractUsernameSafe(token);
+        if (username == null) {
+            return null;
+        }
         return userRepository.findByUsernameWithGenres(username).orElse(null);
     }
     @Override
@@ -186,42 +196,30 @@ public class UserService implements IUserService {
 
     @Override
     public AuthResponse loginUser(LoginUserRequest loginUserRequest) {
-        User user = userRepository.findByUsername(loginUserRequest.getUsername());
-
-        if (Objects.equals(user.getRole().getName(), "User"))
-        {
-            // Check if the user exists and the password is correct
-            if (PasswordHashingUtility.verifyPassword(loginUserRequest.getPassword(), user.getPassword())) {
-                // Generate JSON Web Token
-                String token = jwtUtility.generateToken(user.getUsername());
-
-                // Return the AuthResponse object with the token
-                return new AuthResponse(token);
-            }
-        }
-
-        // Return null if the user does not exist or the password is incorrect
-        return null;
+        return loginWithRole(loginUserRequest, "User");
     }
 
     @Override
     public AuthResponse loginAdmin(LoginUserRequest loginUserRequest) {
-        User user = userRepository.findByUsername(loginUserRequest.getUsername());
+        return loginWithRole(loginUserRequest, "Admin");
+    }
 
-        if (Objects.equals(user.getRole().getName(), "Admin"))
-        {
-            // Check if the user exists and the password is correct
-            if (PasswordHashingUtility.verifyPassword(loginUserRequest.getPassword(), user.getPassword())) {
-                // Generate JSON Web Token
-                String token = jwtUtility.generateToken(user.getUsername());
-
-                // Return the AuthResponse object with the token
-                return new AuthResponse(token);
-            }
+    // Shared login flow. Previous versions dereferenced `user.getRole().getName()`
+    // unconditionally, which threw a NullPointerException — and a 500 response —
+    // whenever someone tried to log in with a username that didn't exist.
+    private AuthResponse loginWithRole(LoginUserRequest request, String expectedRole) {
+        User user = userRepository.findByUsername(request.getUsername());
+        if (user == null || user.getRole() == null) {
+            return null;
         }
-
-        // Return null if the user does not exist or the password is incorrect
-        return null;
+        if (!Objects.equals(user.getRole().getName(), expectedRole)) {
+            return null;
+        }
+        if (!PasswordHashingUtility.verifyPassword(request.getPassword(), user.getPassword())) {
+            return null;
+        }
+        String token = jwtUtility.generateToken(user.getUsername());
+        return new AuthResponse(token);
     }
 
     @Override
