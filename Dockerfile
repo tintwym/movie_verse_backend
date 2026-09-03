@@ -24,4 +24,5 @@ COPY --from=build /app/app.jar ./app.jar
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Render sets $PORT; fall back to 8080 for local Docker
+ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-8080} -jar app.jar"]

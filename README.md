@@ -19,6 +19,17 @@ Spring Boot **3.4** REST API for MovieVerse (`Java 17`, Maven). It backs authent
 
 Hibernate `ddl-auto=update` creates/updates tables on first start.
 
+### Deploy on Render
+
+1. New **Web Service** → connect `movie_verse_backend`
+2. **Native Java** (recommended):
+   - Build: `./mvnw -DskipTests package`
+   - Start: `java -Dserver.port=$PORT -jar target/backend-0.0.1-SNAPSHOT.jar`
+3. Or **Docker**: use the repo `Dockerfile` (already reads `$PORT`)
+4. Set env vars: `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, `JWT_SECRET`, and `cors.allowed-origins` (your live web URL)
+
+The app listens on `server.port=${PORT:8080}` so Render health checks pass.
+
 ## Run
 
 ```bash

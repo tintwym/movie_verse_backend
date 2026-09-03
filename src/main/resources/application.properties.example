@@ -1,5 +1,8 @@
 spring.application.name=movie-verse-backend
 
+# Render / cloud hosts set PORT; default to 8080 locally
+server.port=${PORT:8080}
+
 # Neon PostgreSQL
 # From the Neon dashboard → Connection details → JDBC (or convert the URI):
 #   postgresql://USER:PASSWORD@HOST/DB?sslmode=require
