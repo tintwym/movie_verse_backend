@@ -32,6 +32,7 @@ build/
 ### VS Code ###
 .vscode/
 
-application.properties
+# Secrets — keep local overrides and .env out of git
+application-local.properties
 .env
 .DS_Store

@@ -1,0 +1,11 @@
+# Local-only overrides (gitignored). Activate with:
+#   ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+#
+# Copy from this file → application-local.properties and fill in Neon values.
+
+spring.datasource.url=jdbc:postgresql://HOST/neondb?sslmode=require
+spring.datasource.username=neondb_owner
+spring.datasource.password=YOUR_PASSWORD
+spring.jpa.show-sql=true
+jwt.secret=local-dev-secret-change-me-please-32chars
+cors.allowed-origins=http://localhost:3000

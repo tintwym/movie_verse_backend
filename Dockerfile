@@ -22,7 +22,9 @@ USER app
 
 COPY --from=build /app/app.jar ./app.jar
 
+ENV SPRING_PROFILES_ACTIVE=docker
+
 EXPOSE 8080
 
 # Render sets $PORT; fall back to 8080 for local Docker
-ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-8080} -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "exec java -Dserver.port=${PORT:-8080} -jar app.jar"]

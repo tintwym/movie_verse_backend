@@ -2,14 +2,14 @@ spring.application.name=movie-verse-backend
 
 # Render / cloud hosts set PORT; default to 8080 locally
 server.port=${PORT:8080}
+server.address=0.0.0.0
 
-# Neon PostgreSQL
-# From the Neon dashboard → Connection details → JDBC (or convert the URI):
-#   postgresql://USER:PASSWORD@HOST/DB?sslmode=require
-# → jdbc:postgresql://HOST/DB?sslmode=require
-spring.datasource.url=jdbc:postgresql://<neon-host>/<database>?sslmode=require
-spring.datasource.username=<username>
-spring.datasource.password=<password>
+# Neon PostgreSQL — set via environment variables (Render / Docker / local export)
+# From Neon dashboard → JDBC URL:
+#   jdbc:postgresql://HOST/DB?sslmode=require
+spring.datasource.url=${SPRING_DATASOURCE_URL}
+spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
+spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
 spring.datasource.driver-class-name=org.postgresql.Driver
 
 # Neon is serverless — keep the pool small
@@ -18,16 +18,17 @@ spring.datasource.hikari.connection-timeout=30000
 spring.datasource.hikari.max-lifetime=300000
 
 # Hibernate
-spring.jpa.show-sql=true
+spring.jpa.show-sql=false
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.open-in-view=false
 
 # JWT — use a long random string (min 32 characters) in production
-jwt.secret=<jwt_secret>
-jwt.expiration=3600000
+jwt.secret=${JWT_SECRET:change-me-to-a-long-random-secret-key-min-32-chars}
+jwt.expiration=${JWT_EXPIRATION:3600000}
 
 # CORS — comma-separated allowed frontend origins
-cors.allowed-origins=http://localhost:3000
+cors.allowed-origins=${CORS_ALLOWED_ORIGINS:http://localhost:3000}
 
 # Static Resources for public access
 spring.web.resources.static-locations=classpath:/static/,classpath:/public/
