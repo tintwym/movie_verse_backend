@@ -24,26 +24,26 @@ public class AdminApiController {
     }
 
     @GetMapping("/stats")
-    public ResponseEntity<Map<String, Object>> stats(@RequestHeader("Authorization") String auth) {
+    public ResponseEntity<Map<String, Object>> stats(@RequestHeader(value = "Authorization", required = false) String auth) {
         AuthHelper.requireAdmin(userService, auth);
         return ResponseEntity.ok(adminService.stats());
     }
 
     @GetMapping("/users")
-    public ResponseEntity<List<AdminUserResponse>> users(@RequestHeader("Authorization") String auth) {
+    public ResponseEntity<List<AdminUserResponse>> users(@RequestHeader(value = "Authorization", required = false) String auth) {
         AuthHelper.requireAdmin(userService, auth);
         return ResponseEntity.ok(adminService.listUsers());
     }
 
     @GetMapping("/reviews")
-    public ResponseEntity<List<AdminReviewResponse>> reviews(@RequestHeader("Authorization") String auth) {
+    public ResponseEntity<List<AdminReviewResponse>> reviews(@RequestHeader(value = "Authorization", required = false) String auth) {
         AuthHelper.requireAdmin(userService, auth);
         return ResponseEntity.ok(adminService.listReviews());
     }
 
     @DeleteMapping("/users/{userId}")
     public ResponseEntity<Void> deleteUser(
-            @RequestHeader("Authorization") String auth,
+            @RequestHeader(value = "Authorization", required = false) String auth,
             @PathVariable UUID userId) {
         AuthHelper.requireAdmin(userService, auth);
         adminService.deleteUser(userId);
@@ -52,7 +52,7 @@ public class AdminApiController {
 
     @DeleteMapping("/reviews")
     public ResponseEntity<Void> deleteReview(
-            @RequestHeader("Authorization") String auth,
+            @RequestHeader(value = "Authorization", required = false) String auth,
             @RequestParam UUID userId,
             @RequestParam Integer tmdbMovieId) {
         AuthHelper.requireAdmin(userService, auth);

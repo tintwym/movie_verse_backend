@@ -42,8 +42,10 @@ Hibernate `ddl-auto=update` creates/updates tables on first start.
 | `SPRING_DATASOURCE_URL` | `jdbc:postgresql://ep-xxx.region.aws.neon.tech/neondb?sslmode=require` |
 | `SPRING_DATASOURCE_USERNAME` | `neondb_owner` |
 | `SPRING_DATASOURCE_PASSWORD` | your Neon password |
-| `JWT_SECRET` | long random string (32+ chars) |
+| `JWT_SECRET` | long random string (32+ chars, **required**) |
 | `CORS_ALLOWED_ORIGINS` | `https://your-web.vercel.app` |
+
+Optional: `SEED_DEFAULT_ADMIN=true` and `ADMIN_PASSWORD=...` only for demos (off by default).
 
 4. Deploy. Health check: `/health`
 

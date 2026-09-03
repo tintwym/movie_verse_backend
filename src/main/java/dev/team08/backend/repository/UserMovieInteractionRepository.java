@@ -17,9 +17,8 @@ public interface UserMovieInteractionRepository extends JpaRepository<UserMovieI
 
     List<UserMovieInteraction> findByUser_Id(UUID userId);
 
-	List<UserMovieInteraction> findAllByUser_Id(UUID userId);
-    
-    // MNP update
+    List<UserMovieInteraction> findAllByUser_Id(UUID userId);
+
     @Query("SELECT m.tmdbMovieId FROM UserMovieInteraction m WHERE m.user.id = :userId AND m.watchStatus = :watchStatus")
     List<Integer> findWatchedMovieIdsByUserId(@Param("userId") UUID userId, @Param("watchStatus") WatchStatus watchStatus);
 
@@ -29,8 +28,8 @@ public interface UserMovieInteractionRepository extends JpaRepository<UserMovieI
     @Query("SELECT m.tmdbMovieId FROM UserMovieInteraction m WHERE m.user.id = :userId AND m.watchStatus = :watchStatus")
     List<Integer> findWatchlistMovieIdsByUserId(@Param("userId") UUID userId, @Param("watchStatus") WatchStatus watchStatus);
 
-
     @Query("SELECT m FROM UserMovieInteraction m WHERE m.user.id = :userId AND m.tmdbMovieId = :movieId")
     Optional<UserMovieInteraction> findByUserIdAndMovieId(@Param("userId") UUID userId, @Param("movieId") Integer movieId);
 
+    void deleteByUser_Id(UUID userId);
 }

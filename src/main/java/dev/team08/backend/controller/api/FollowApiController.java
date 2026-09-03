@@ -25,14 +25,14 @@ public class FollowApiController {
     }
 
     @GetMapping
-    public ResponseEntity<List<FollowedPersonResponse>> list(@RequestHeader("Authorization") String auth) {
+    public ResponseEntity<List<FollowedPersonResponse>> list(@RequestHeader(value = "Authorization", required = false) String auth) {
         UUID userId = AuthHelper.requireUserId(userService, auth);
         return ResponseEntity.ok(followService.list(userId));
     }
 
     @GetMapping("/{personId}/status")
     public ResponseEntity<Map<String, Boolean>> status(
-            @RequestHeader("Authorization") String auth,
+            @RequestHeader(value = "Authorization", required = false) String auth,
             @PathVariable Integer personId) {
         UUID userId = AuthHelper.requireUserId(userService, auth);
         return ResponseEntity.ok(Map.of("following", followService.isFollowing(userId, personId)));
@@ -40,7 +40,7 @@ public class FollowApiController {
 
     @PostMapping
     public ResponseEntity<FollowedPersonResponse> follow(
-            @RequestHeader("Authorization") String auth,
+            @RequestHeader(value = "Authorization", required = false) String auth,
             @RequestBody FollowPersonRequest request) {
         UUID userId = AuthHelper.requireUserId(userService, auth);
         return ResponseEntity.ok(followService.follow(userId, request));
@@ -48,7 +48,7 @@ public class FollowApiController {
 
     @DeleteMapping("/{personId}")
     public ResponseEntity<Void> unfollow(
-            @RequestHeader("Authorization") String auth,
+            @RequestHeader(value = "Authorization", required = false) String auth,
             @PathVariable Integer personId) {
         UUID userId = AuthHelper.requireUserId(userService, auth);
         followService.unfollow(userId, personId);
@@ -57,7 +57,7 @@ public class FollowApiController {
 
     @PostMapping("/check-credits")
     public ResponseEntity<Map<String, Integer>> checkCredits(
-            @RequestHeader("Authorization") String auth,
+            @RequestHeader(value = "Authorization", required = false) String auth,
             @RequestBody List<FollowCreditCheckRequest> credits) {
         UUID userId = AuthHelper.requireUserId(userService, auth);
         return ResponseEntity.ok(Map.of("created", followService.checkCredits(userId, credits)));

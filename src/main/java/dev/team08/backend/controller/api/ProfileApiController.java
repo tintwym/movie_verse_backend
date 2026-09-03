@@ -20,17 +20,20 @@ public class ProfileApiController {
     }
 
     @GetMapping("/profile/me")
-    public ResponseEntity<UserProfileRequest> getProfile(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<UserProfileRequest> getProfile(
+            @RequestHeader(value = "Authorization", required = false) String token) {
         try {
             return ResponseEntity.ok(userService.getUserProfile(token));
+        } catch (ResponseStatusException e) {
+            throw e;
         } catch (RuntimeException e) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired token");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to load profile");
         }
     }
 
     @PutMapping("/profile/update")
     public ResponseEntity<?> updateUserProfile(
-            @RequestHeader("Authorization") String token,
+            @RequestHeader(value = "Authorization", required = false) String token,
             @RequestBody UserProfileRequest updatedProfile) {
 
         try {
@@ -43,8 +46,7 @@ public class ProfileApiController {
         } catch (ResponseStatusException e) {
             throw e;
         } catch (RuntimeException e) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired token");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update profile");
         }
     }
-
 }

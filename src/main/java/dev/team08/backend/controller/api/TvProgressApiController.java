@@ -25,7 +25,7 @@ public class TvProgressApiController {
 
     @GetMapping("/{tvId}")
     public ResponseEntity<List<TvProgressResponse>> list(
-            @RequestHeader("Authorization") String auth,
+            @RequestHeader(value = "Authorization", required = false) String auth,
             @PathVariable Integer tvId) {
         UUID userId = AuthHelper.requireUserId(userService, auth);
         return ResponseEntity.ok(tvProgressService.listForShow(userId, tvId));
@@ -33,7 +33,7 @@ public class TvProgressApiController {
 
     @PutMapping
     public ResponseEntity<TvProgressResponse> upsert(
-            @RequestHeader("Authorization") String auth,
+            @RequestHeader(value = "Authorization", required = false) String auth,
             @RequestBody TvProgressRequest request) {
         UUID userId = AuthHelper.requireUserId(userService, auth);
         return ResponseEntity.ok(tvProgressService.upsert(userId, request));
@@ -41,7 +41,7 @@ public class TvProgressApiController {
 
     @PostMapping("/{tvId}/season/{seasonNumber}")
     public ResponseEntity<Void> markSeason(
-            @RequestHeader("Authorization") String auth,
+            @RequestHeader(value = "Authorization", required = false) String auth,
             @PathVariable Integer tvId,
             @PathVariable int seasonNumber,
             @RequestBody Map<String, List<Integer>> body) {

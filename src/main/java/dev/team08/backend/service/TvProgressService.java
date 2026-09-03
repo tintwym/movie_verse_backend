@@ -25,7 +25,7 @@ public class TvProgressService {
     }
 
     public List<TvProgressResponse> listForShow(UUID userId, Integer tmdbTvId) {
-        return tvProgressRepository.findByUser_IdAndTmdbTvIdAndWatchedTrue(userId, tmdbTvId).stream()
+        return tvProgressRepository.findByUser_IdAndTmdbTvId(userId, tmdbTvId).stream()
                 .map(p -> new TvProgressResponse(
                         p.getTmdbTvId(), p.getSeasonNumber(), p.getEpisodeNumber(), p.isWatched()))
                 .toList();

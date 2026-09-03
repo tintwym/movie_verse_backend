@@ -8,6 +8,7 @@ import dev.team08.backend.repository.FollowedPersonRepository;
 import dev.team08.backend.repository.MovieReviewRepository;
 import dev.team08.backend.repository.NotificationRepository;
 import dev.team08.backend.repository.TvProgressRepository;
+import dev.team08.backend.repository.UserMovieInteractionRepository;
 import dev.team08.backend.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ public class AdminService {
     private final NotificationRepository notificationRepository;
     private final FollowedPersonRepository followedPersonRepository;
     private final TvProgressRepository tvProgressRepository;
+    private final UserMovieInteractionRepository userMovieInteractionRepository;
 
     public AdminService(
             UserRepository userRepository,
@@ -34,13 +36,15 @@ public class AdminService {
             MovieReviewService movieReviewService,
             NotificationRepository notificationRepository,
             FollowedPersonRepository followedPersonRepository,
-            TvProgressRepository tvProgressRepository) {
+            TvProgressRepository tvProgressRepository,
+            UserMovieInteractionRepository userMovieInteractionRepository) {
         this.userRepository = userRepository;
         this.movieReviewRepository = movieReviewRepository;
         this.movieReviewService = movieReviewService;
         this.notificationRepository = notificationRepository;
         this.followedPersonRepository = followedPersonRepository;
         this.tvProgressRepository = tvProgressRepository;
+        this.userMovieInteractionRepository = userMovieInteractionRepository;
     }
 
     public Map<String, Object> stats() {
@@ -78,6 +82,7 @@ public class AdminService {
         notificationRepository.deleteByUser_Id(userId);
         followedPersonRepository.deleteByUser_Id(userId);
         tvProgressRepository.deleteByUser_Id(userId);
+        userMovieInteractionRepository.deleteByUser_Id(userId);
         userRepository.delete(user);
     }
 
@@ -91,10 +96,10 @@ public class AdminService {
                 ? r.getEditedReviewText()
                 : r.getOriginalReviewText();
         String username = r.getUser() != null ? r.getUser().getUsername() : "unknown";
-        String userId = r.getUser() != null && r.getUser().getId() != null
+        String uid = r.getUser() != null && r.getUser().getId() != null
                 ? r.getUser().getId().toString() : null;
         return new AdminReviewResponse(
-                userId,
+                uid,
                 username,
                 r.getTmdbMovieId(),
                 text,

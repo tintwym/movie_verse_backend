@@ -23,13 +23,19 @@ public class MovieReviewApiController {
 	
     @PostMapping("/{tmdb_movie_id}")
     public ResponseEntity<String> addOrUpdateReview(
-            @RequestHeader("Authorization") String token,
+            @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable Integer tmdb_movie_id,
             @RequestParam String reviewText,
             @RequestParam(defaultValue = "false") boolean isEdit) {
 
         UUID userId = extractUserIdFromToken(token);
-        movieReviewService.addOrUpdateReview(userId, tmdb_movie_id, reviewText, isEdit);
+        if (reviewText == null || reviewText.isBlank()) {
+            return ResponseEntity.badRequest().body("Review text is required.");
+        }
+        if (reviewText.length() > 1000) {
+            return ResponseEntity.badRequest().body("Review text must be at most 1000 characters.");
+        }
+        movieReviewService.addOrUpdateReview(userId, tmdb_movie_id, reviewText.trim(), isEdit);
         return ResponseEntity.ok(isEdit ? "Review updated successfully." : "Review added successfully.");
     }
 
@@ -38,7 +44,7 @@ public class MovieReviewApiController {
      */
     @DeleteMapping("/{tmdb_movie_id}")
     public ResponseEntity<String> deleteReview(
-            @RequestHeader("Authorization") String token,
+            @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable Integer tmdb_movie_id) {
 
         UUID userId = extractUserIdFromToken(token);
@@ -59,7 +65,7 @@ public class MovieReviewApiController {
      */
     @GetMapping("/{tmdb_movie_id}/user")
     public ResponseEntity<?> getUserReview(
-            @RequestHeader("Authorization") String token,
+            @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable Integer tmdb_movie_id) {
 
         UUID userId = extractUserIdFromToken(token);
@@ -71,7 +77,7 @@ public class MovieReviewApiController {
     }
 
     @GetMapping("/user/review-count")
-    public ResponseEntity<?> getReviewCountByUser(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<?> getReviewCountByUser(@RequestHeader(value = "Authorization", required = false) String token) {
         UUID userId = extractUserIdFromToken(token);
         int reviewCount = movieReviewService.getReviewCountByUserId(userId);
         return ResponseEntity.ok(Map.of("reviewCount", reviewCount));

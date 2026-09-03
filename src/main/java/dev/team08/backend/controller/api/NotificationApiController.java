@@ -23,20 +23,20 @@ public class NotificationApiController {
     }
 
     @GetMapping
-    public ResponseEntity<List<NotificationResponse>> list(@RequestHeader("Authorization") String auth) {
+    public ResponseEntity<List<NotificationResponse>> list(@RequestHeader(value = "Authorization", required = false) String auth) {
         UUID userId = AuthHelper.requireUserId(userService, auth);
         return ResponseEntity.ok(notificationService.listForUser(userId));
     }
 
     @GetMapping("/unread-count")
-    public ResponseEntity<Map<String, Long>> unreadCount(@RequestHeader("Authorization") String auth) {
+    public ResponseEntity<Map<String, Long>> unreadCount(@RequestHeader(value = "Authorization", required = false) String auth) {
         UUID userId = AuthHelper.requireUserId(userService, auth);
         return ResponseEntity.ok(Map.of("count", notificationService.unreadCount(userId)));
     }
 
     @PostMapping("/{id}/read")
     public ResponseEntity<Void> markRead(
-            @RequestHeader("Authorization") String auth,
+            @RequestHeader(value = "Authorization", required = false) String auth,
             @PathVariable UUID id) {
         UUID userId = AuthHelper.requireUserId(userService, auth);
         notificationService.markRead(userId, id);
@@ -44,7 +44,7 @@ public class NotificationApiController {
     }
 
     @PostMapping("/read-all")
-    public ResponseEntity<Void> markAllRead(@RequestHeader("Authorization") String auth) {
+    public ResponseEntity<Void> markAllRead(@RequestHeader(value = "Authorization", required = false) String auth) {
         UUID userId = AuthHelper.requireUserId(userService, auth);
         notificationService.markAllRead(userId);
         return ResponseEntity.ok().build();

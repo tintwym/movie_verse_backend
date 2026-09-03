@@ -4,17 +4,10 @@ public class ResetPasswordRequest {
     private String username;
     private String email;
     private String newPassword;
+    private String resetToken;
 
-    // Constructors
     public ResetPasswordRequest() {}
 
-    public ResetPasswordRequest(String username, String email, String newPassword) {
-        this.username = username;
-        this.email = email;
-        this.newPassword = newPassword;
-    }
-
-    // Getters and Setters
     public String getUsername() {
         return username;
     }
@@ -37,5 +30,13 @@ public class ResetPasswordRequest {
 
     public void setNewPassword(String newPassword) {
         this.newPassword = newPassword;
+    }
+
+    public String getResetToken() {
+        return resetToken;
+    }
+
+    public void setResetToken(String resetToken) {
+        this.resetToken = resetToken;
     }
 }

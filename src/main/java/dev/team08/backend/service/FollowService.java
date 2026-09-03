@@ -49,22 +49,29 @@ public class FollowService {
         return followedPersonRepository.findByUser_IdAndTmdbPersonId(userId, request.getTmdbPersonId())
                 .map(this::toResponse)
                 .orElseGet(() -> {
-                    User user = userRepository.findById(userId)
-                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-                    FollowedPerson fp = followedPersonRepository.save(new FollowedPerson(
-                            user,
-                            request.getTmdbPersonId(),
-                            request.getPersonName().trim(),
-                            request.getProfilePath()
-                    ));
-                    notificationService.create(
-                            userId,
-                            "follow",
-                            "Following " + fp.getPersonName(),
-                            "You'll get updates when " + fp.getPersonName() + " appears in new titles.",
-                            "/people/" + fp.getTmdbPersonId()
-                    );
-                    return toResponse(fp);
+                    try {
+                        User user = userRepository.findById(userId)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                        FollowedPerson fp = followedPersonRepository.save(new FollowedPerson(
+                                user,
+                                request.getTmdbPersonId(),
+                                request.getPersonName().trim(),
+                                request.getProfilePath()
+                        ));
+                        notificationService.create(
+                                userId,
+                                "follow",
+                                "Following " + fp.getPersonName(),
+                                "You'll get updates when " + fp.getPersonName() + " appears in new titles.",
+                                "/people/" + fp.getTmdbPersonId()
+                        );
+                        return toResponse(fp);
+                    } catch (org.springframework.dao.DataIntegrityViolationException e) {
+                        return followedPersonRepository
+                                .findByUser_IdAndTmdbPersonId(userId, request.getTmdbPersonId())
+                                .map(this::toResponse)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "Already following"));
+                    }
                 });
     }
 
@@ -107,7 +114,7 @@ public class FollowService {
                     fp.getPersonName() + " — new credit",
                     fp.getPersonName() + " is in \"" + title + "\""
                             + (credit.getReleaseDate() != null ? " (" + credit.getReleaseDate() + ")" : "") + ".",
-                    "/" + media + "/" + credit.getCreditId()
+                    "/" + ("tv".equals(media) ? "tv" : "movies") + "/" + credit.getCreditId()
             );
             fp.setLastNotifiedCreditId(credit.getCreditId());
             followedPersonRepository.save(fp);

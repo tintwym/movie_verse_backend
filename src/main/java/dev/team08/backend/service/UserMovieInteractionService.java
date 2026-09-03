@@ -40,7 +40,7 @@ public class UserMovieInteractionService implements IUserMovieInteractionService
         return userMovieInteractionRepository.findByUser_IdAndTmdbMovieId(userId, tmdbMovieId)
                 .orElseGet(() -> {
                     User user = userRepository.findById(userId)
-                            .orElseThrow(() -> new RuntimeException("User not found"));
+                            .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "User not found"));
                     UserMovieInteraction newInteraction = new UserMovieInteraction(user, tmdbMovieId);
                     return userMovieInteractionRepository.save(newInteraction);
                 });
@@ -132,7 +132,9 @@ public class UserMovieInteractionService implements IUserMovieInteractionService
         }
         UUID userId = user.getId();
 
-        String user_types = user.getFavoriteGenres().stream()
+        String user_types = user.getFavoriteGenres() == null
+                ? ""
+                : user.getFavoriteGenres().stream()
                 .map(Genre::getName)
                 .distinct()
                 .collect(Collectors.joining("/"));

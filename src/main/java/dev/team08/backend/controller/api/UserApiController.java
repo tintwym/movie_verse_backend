@@ -3,7 +3,7 @@ package dev.team08.backend.controller.api;
 import dev.team08.backend.dto.request.ChangePasswordRequest;
 import dev.team08.backend.dto.request.GenreRequest;
 import dev.team08.backend.dto.request.ResetPasswordRequest;
-import dev.team08.backend.entity.User;
+import dev.team08.backend.dto.request.UserProfileRequest;
 import dev.team08.backend.service.UserService;
 import dev.team08.backend.utility.AuthHelper;
 import org.springframework.http.HttpStatus;
@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -25,39 +24,28 @@ public class UserApiController {
     }
 
     @PostMapping("/verify-token")
-    public ResponseEntity<?> verifyToken(@RequestHeader(value = "Authorization", required = false) String token, @RequestBody String usernameJson) {
-        // Check if the token is present
+    public ResponseEntity<?> verifyToken(
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @RequestBody String usernameJson) {
         if (token == null || !token.startsWith("Bearer ")) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authorization token is missing or invalid");
         }
-
-        // Verify the token
         boolean isValid = userService.verifyToken(token, usernameJson);
-
-        // Return a 200 OK response if the token is valid, otherwise return a 401 Unauthorized response
         return isValid ? ResponseEntity.ok().build() : ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
     @GetMapping("/token")
-    public ResponseEntity<User> getUserFromToken(@RequestHeader(value = "Authorization", required = false) String token) {
-        // Check if the token is present
+    public ResponseEntity<UserProfileRequest> getUserFromToken(
+            @RequestHeader(value = "Authorization", required = false) String token) {
         if (token == null || !token.startsWith("Bearer ")) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authorization token is missing or invalid");
         }
-
-        // `getUserFromToken` now returns null for expired / malformed / unknown
-        // tokens rather than throwing, so we have to translate that into a 401
-        // ourselves instead of shipping back `200 OK` with an empty body.
-        User user = userService.getUserFromToken(token);
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(userService.getUserProfile(token));
     }
-    
+
     @PostMapping("/setGenres")
     public ResponseEntity<String> setGenres(
-            @RequestHeader("Authorization") String token,
+            @RequestHeader(value = "Authorization", required = false) String token,
             @RequestBody List<GenreRequest> genreRequests) {
         try {
             AuthHelper.requireUserId(userService, token);
@@ -76,9 +64,13 @@ public class UserApiController {
 
     @PostMapping("/change-password")
     public ResponseEntity<String> changePassword(
-            @RequestHeader("Authorization") String token,
-            @RequestBody ChangePasswordRequest changePasswordRequest
-            ) {
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @RequestBody ChangePasswordRequest changePasswordRequest) {
+        if (changePasswordRequest == null
+                || changePasswordRequest.getCurrentPassword() == null
+                || changePasswordRequest.getNewPassword() == null) {
+            return ResponseEntity.badRequest().body("Current and new password are required");
+        }
         UUID userId = AuthHelper.requireUserId(userService, token);
         boolean isUpdated = userService.updatePassword(
                 userId,
@@ -86,31 +78,28 @@ public class UserApiController {
                 changePasswordRequest.getNewPassword());
         if (isUpdated) {
             return ResponseEntity.ok("Password updated successfully");
-        } else {
-            return ResponseEntity.status(400).body("Current password is incorrect");
         }
-
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Current password is incorrect");
     }
 
     @PostMapping("/reset-password")
     public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest request) {
-        Optional<User> userOptional = userService.findByUsernameAndEmail(request.getUsername(), request.getEmail());
-
-        if (userOptional.isEmpty()) {
-            return ResponseEntity.status(400).body("Invalid request. Please verify first.");
+        if (request == null) {
+            return ResponseEntity.badRequest().body("Invalid or expired reset request.");
         }
-
-        // Update password
-        User user = userOptional.get();
-        userService.resetPassword(user.getId(), request.getNewPassword());
-
-        return ResponseEntity.ok("Password reset successfully.");
+        try {
+            boolean ok = userService.resetPasswordWithToken(
+                    request.getUsername(),
+                    request.getEmail(),
+                    request.getResetToken(),
+                    request.getNewPassword()
+            );
+            if (!ok) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid or expired reset request.");
+            }
+            return ResponseEntity.ok("Password reset successfully.");
+        } catch (ResponseStatusException e) {
+            throw e;
+        }
     }
-
-
-//    @GetMapping("/user_interactions_table")
-//    public ResponseEntity<List<Map<String, Object>>> getUserInteractionsTable(@RequestHeader("Authorization") String token) {
-//        return ResponseEntity.ok(userService.getUserInteractions(token));
-//    }
-
 }

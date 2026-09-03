@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface TvProgressRepository extends JpaRepository<TvProgress, UUID> {
+    List<TvProgress> findByUser_IdAndTmdbTvId(UUID userId, Integer tmdbTvId);
     List<TvProgress> findByUser_IdAndTmdbTvIdAndWatchedTrue(UUID userId, Integer tmdbTvId);
     Optional<TvProgress> findByUser_IdAndTmdbTvIdAndSeasonNumberAndEpisodeNumber(
             UUID userId, Integer tmdbTvId, int seasonNumber, int episodeNumber);

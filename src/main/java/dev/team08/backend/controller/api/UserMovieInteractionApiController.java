@@ -25,7 +25,7 @@ public class UserMovieInteractionApiController {
 
     @PostMapping("/view/{tmdb_movie_id}")
     public ResponseEntity<String> logMovieView(
-            @RequestHeader("Authorization") String token,
+            @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable Integer tmdb_movie_id) {
 
         UUID userId = extractUserIdFromToken(token);
@@ -35,7 +35,7 @@ public class UserMovieInteractionApiController {
 
     @PutMapping("/watched/{tmdb_movie_id}")
     public ResponseEntity<String> markMovieAsWatched(
-            @RequestHeader("Authorization") String token,
+            @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable Integer tmdb_movie_id) {
 
         UUID userId = extractUserIdFromToken(token);
@@ -45,7 +45,7 @@ public class UserMovieInteractionApiController {
     
     @PostMapping("/like/{tmdb_movie_id}")
     public ResponseEntity<String> likeOrDislikeMovie(
-            @RequestHeader("Authorization") String token,
+            @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable Integer tmdb_movie_id,
             @RequestParam LikeStatus likeStatus) {
 
@@ -56,7 +56,7 @@ public class UserMovieInteractionApiController {
 
     @PostMapping("/favorite/{tmdb_movie_id}")
     public ResponseEntity<String> toggleFavorite(
-            @RequestHeader("Authorization") String token,
+            @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable Integer tmdb_movie_id) {
 
         UUID userId = extractUserIdFromToken(token);
@@ -66,7 +66,7 @@ public class UserMovieInteractionApiController {
 
     @PostMapping("/watchlist/{tmdb_movie_id}")
     public ResponseEntity<String> toggleWatchlist(
-            @RequestHeader("Authorization") String token,
+            @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable Integer tmdb_movie_id) {
 
         UUID userId = extractUserIdFromToken(token);
@@ -76,7 +76,7 @@ public class UserMovieInteractionApiController {
 
     @GetMapping("/{tmdb_movie_id:\\d+}")
     public ResponseEntity<UserMovieInteraction> getUserMovieInteraction(
-            @RequestHeader("Authorization") String token,
+            @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable Integer tmdb_movie_id) {
 
         UUID userId = extractUserIdFromToken(token);
@@ -86,7 +86,7 @@ public class UserMovieInteractionApiController {
     }
     
     @GetMapping("/recommend")
-    public ResponseEntity<?> getRecommendedGenres(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<?> getRecommendedGenres(@RequestHeader(value = "Authorization", required = false) String token) {
         extractUserIdFromToken(token);
         List<Map<String, Object>> userInteractions =
                 userMovieInteractionService.getUserInteractions(token);
@@ -101,7 +101,7 @@ public class UserMovieInteractionApiController {
 
     // MNP update
     @GetMapping("/watched")
-    public ResponseEntity<List<Integer>> getWatchedMovieIds(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<List<Integer>> getWatchedMovieIds(@RequestHeader(value = "Authorization", required = false) String token) {
         UUID userId = extractUserIdFromToken(token);
         List<Integer> watchedMovieIds = userMovieInteractionService.getWatchedMovieIds(userId);
         return ResponseEntity.ok(watchedMovieIds);
@@ -109,7 +109,7 @@ public class UserMovieInteractionApiController {
 
     @PutMapping("/unwatched/{tmdb_movie_id}")
     public ResponseEntity<String> unmarkMovieAsWatched(
-            @RequestHeader("Authorization") String token,
+            @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable Integer tmdb_movie_id) {
 
         UUID userId = extractUserIdFromToken(token);
@@ -118,14 +118,14 @@ public class UserMovieInteractionApiController {
     }
 
     @GetMapping("/favorites")
-    public ResponseEntity<List<Integer>> getFavoriteMovieIds(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<List<Integer>> getFavoriteMovieIds(@RequestHeader(value = "Authorization", required = false) String token) {
         UUID userId = extractUserIdFromToken(token);
         List<Integer> favoriteMovieIds = userMovieInteractionService.getFavoriteMovieIds(userId);
         return ResponseEntity.ok(favoriteMovieIds);
     }
 
     @GetMapping("/watchlist")
-    public ResponseEntity<List<Integer>> getWatchlistMovieIds(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<List<Integer>> getWatchlistMovieIds(@RequestHeader(value = "Authorization", required = false) String token) {
         UUID userId = extractUserIdFromToken(token);
         List<Integer> watchlistMovieIds = userMovieInteractionService.getWatchlistMovieIds(userId);
         return ResponseEntity.ok(watchlistMovieIds);
@@ -133,7 +133,7 @@ public class UserMovieInteractionApiController {
 
     // Endpoint to get the count of watched movies
     @GetMapping("/watched-count")
-    public ResponseEntity<Map<String, Integer>> getWatchedMoviesCount(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<Map<String, Integer>> getWatchedMoviesCount(@RequestHeader(value = "Authorization", required = false) String token) {
         UUID userId = extractUserIdFromToken(token);
         List<Integer> watchedMovieIds = userMovieInteractionService.getWatchedMovieIds(userId);
         return ResponseEntity.ok(Map.of("count", watchedMovieIds.size()));
@@ -141,7 +141,7 @@ public class UserMovieInteractionApiController {
 
     // Endpoint to get the count of favorite movies
     @GetMapping("/favorite-count")
-    public ResponseEntity<Map<String, Integer>> getFavoriteMoviesCount(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<Map<String, Integer>> getFavoriteMoviesCount(@RequestHeader(value = "Authorization", required = false) String token) {
         UUID userId = extractUserIdFromToken(token);
         List<Integer> favoriteMovieIds = userMovieInteractionService.getFavoriteMovieIds(userId);
         return ResponseEntity.ok(Map.of("count", favoriteMovieIds.size()));
@@ -149,7 +149,7 @@ public class UserMovieInteractionApiController {
 
     @GetMapping("/getuserinteractions")
     public ResponseEntity<List<Map<String, Object>>> getAllUserInteractions(
-            @RequestHeader("Authorization") String token) {
+            @RequestHeader(value = "Authorization", required = false) String token) {
 
         extractUserIdFromToken(token);
         List<Map<String, Object>> interactions = userMovieInteractionService.getUserInteractions(token);

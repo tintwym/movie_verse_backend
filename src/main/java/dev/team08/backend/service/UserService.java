@@ -30,6 +30,12 @@ public class UserService implements IUserService {
     private final JwtUtility jwtUtility;
     private final UserMapper userMapper;
 
+    @org.springframework.beans.factory.annotation.Value("${app.seed-default-admin:false}")
+    private boolean seedDefaultAdmin;
+
+    @org.springframework.beans.factory.annotation.Value("${app.admin-password:}")
+    private String adminPassword;
+
     public UserService(UserMapper userMapper, UserRepository userRepository, RoleRepository roleRepository, GenreRepository genreRepository, JwtUtility jwtUtility) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
@@ -42,10 +48,13 @@ public class UserService implements IUserService {
     public void initRoles() {
         createRoleIfNotExists("User");
         createRoleIfNotExists("Admin");
-        seedDefaultAdmin();
+        seedDefaultAdminIfEnabled();
     }
 
-    private void seedDefaultAdmin() {
+    private void seedDefaultAdminIfEnabled() {
+        if (!seedDefaultAdmin) {
+            return;
+        }
         if (userRepository.findByUsername("admin") != null) {
             return;
         }
@@ -53,12 +62,17 @@ public class UserService implements IUserService {
         if (adminRole == null) {
             return;
         }
+        String password = (adminPassword != null && !adminPassword.isBlank())
+                ? adminPassword
+                : java.util.UUID.randomUUID().toString();
         User admin = new User();
         admin.setUsername("admin");
         admin.setEmail("admin@movieverse.local");
-        admin.setPassword(PasswordHashingUtility.hashPassword("admin123"));
+        admin.setPassword(PasswordHashingUtility.hashPassword(password));
         admin.setRole(adminRole);
+        admin.setFavoriteGenres(new java.util.ArrayList<>());
         userRepository.save(admin);
+        System.out.println("[UserService] Seeded admin user. Set app.admin-password / ADMIN_PASSWORD to control the password.");
     }
 
     private void createRoleIfNotExists(String roleName) {
@@ -328,11 +342,63 @@ public class UserService implements IUserService {
     }
 
     public Optional<User> findByUsernameAndEmail(String username, String email) {
-        // Query the database to find a user with matching username and email
         return userRepository.findByUsernameAndEmail(username, email);
     }
 
+    /**
+     * Issues a one-time reset token. Always returns a token string for valid users;
+     * callers must use a generic client message to avoid account enumeration.
+     */
+    @Transactional
+    public String issuePasswordResetToken(String username, String email) {
+        Optional<User> userOptional = userRepository.findByUsernameAndEmail(username, email);
+        if (userOptional.isEmpty()) {
+            return null;
+        }
+        User user = userOptional.get();
+        String rawToken = java.util.UUID.randomUUID().toString().replace("-", "")
+                + java.util.UUID.randomUUID().toString().replace("-", "");
+        user.setResetTokenHash(PasswordHashingUtility.hashPassword(rawToken));
+        user.setResetTokenExpiresAt(java.time.LocalDateTime.now().plusMinutes(15));
+        userRepository.save(user);
+        return rawToken;
+    }
+
+    @Transactional
+    public boolean resetPasswordWithToken(String username, String email, String resetToken, String newPassword) {
+        if (newPassword == null || newPassword.isBlank() || newPassword.length() < 8) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must be at least 8 characters");
+        }
+        if (!newPassword.matches("(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@#$%^&+=!]).{8,}")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Password needs uppercase, lowercase, number, and special character");
+        }
+        if (resetToken == null || resetToken.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Reset token required");
+        }
+        Optional<User> userOptional = userRepository.findByUsernameAndEmail(username, email);
+        if (userOptional.isEmpty()) {
+            return false;
+        }
+        User user = userOptional.get();
+        if (user.getResetTokenHash() == null || user.getResetTokenExpiresAt() == null
+                || user.getResetTokenExpiresAt().isBefore(java.time.LocalDateTime.now())) {
+            return false;
+        }
+        if (!PasswordHashingUtility.verifyPassword(resetToken, user.getResetTokenHash())) {
+            return false;
+        }
+        user.setPassword(PasswordHashingUtility.hashPassword(newPassword));
+        user.setResetTokenHash(null);
+        user.setResetTokenExpiresAt(null);
+        userRepository.save(user);
+        return true;
+    }
+
     public boolean resetPassword(UUID userId, String newPassword) {
+        if (newPassword == null || newPassword.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must not be empty");
+        }
         Optional<User> optionalUser = userRepository.findById(userId);
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();

@@ -22,6 +22,14 @@ public class User extends BaseEntity{
     private String avatar;
     private String bio;
 
+    @JsonIgnore
+    @Column(name = "reset_token_hash")
+    private String resetTokenHash;
+
+    @JsonIgnore
+    @Column(name = "reset_token_expires_at")
+    private java.time.LocalDateTime resetTokenExpiresAt;
+
     @ManyToOne
     @JsonIgnore
     @JoinColumn(name = "role_id", nullable = false)
@@ -98,6 +106,22 @@ public class User extends BaseEntity{
 
     public void setBio(String bio) {
         this.bio = bio;
+    }
+
+    public String getResetTokenHash() {
+        return resetTokenHash;
+    }
+
+    public void setResetTokenHash(String resetTokenHash) {
+        this.resetTokenHash = resetTokenHash;
+    }
+
+    public java.time.LocalDateTime getResetTokenExpiresAt() {
+        return resetTokenExpiresAt;
+    }
+
+    public void setResetTokenExpiresAt(java.time.LocalDateTime resetTokenExpiresAt) {
+        this.resetTokenExpiresAt = resetTokenExpiresAt;
     }
 
     public Role getRole() {

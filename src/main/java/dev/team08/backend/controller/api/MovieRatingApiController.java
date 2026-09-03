@@ -24,7 +24,7 @@ public class MovieRatingApiController {
 
     @PostMapping("/{tmdb_movie_id}")
     public ResponseEntity<String> rateMovie(
-            @RequestHeader("Authorization") String token,
+            @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable Integer tmdb_movie_id,
             @RequestParam Double rating) {
 
@@ -39,7 +39,7 @@ public class MovieRatingApiController {
      */
     @DeleteMapping("/{tmdb_movie_id}")
     public ResponseEntity<String> deleteRating(
-            @RequestHeader("Authorization") String token,
+            @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable Integer tmdb_movie_id) {
 
         UUID userId = extractUserIdFromToken(token);
@@ -52,7 +52,7 @@ public class MovieRatingApiController {
      */
     @GetMapping("/{tmdb_movie_id}/user")
     public ResponseEntity<?> getUserRating(
-            @RequestHeader("Authorization") String token,
+            @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable Integer tmdb_movie_id) {
 
         UUID userId = extractUserIdFromToken(token);
