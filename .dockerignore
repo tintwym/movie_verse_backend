@@ -1,0 +1,14 @@
+.git
+.gitignore
+.gitattributes
+.DS_Store
+target/
+*.md
+scripts/
+.idea/
+.vscode/
+*.iml
+application.properties
+.env
+.env.*
+!src/main/resources/application-docker.properties

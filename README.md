@@ -6,29 +6,63 @@ Spring Boot **3.4** REST API for MovieVerse (`Java 17`, Maven). It backs authent
 
 - JDK 17
 - Maven
-- MySQL 8 (schema URL and credentials in your local config)
+- A [Neon](https://neon.tech) PostgreSQL database
 
 ## Configuration
 
-1. Copy `src/main/resources/application.properties.example` to `application.properties` (same directory, and ensure it is gitignored for secrets).
-2. Set MySQL `spring.datasource.*`, JWT `jwt.secret` / `jwt.expiration`, and any other values your environment needs.
+1. Copy `src/main/resources/application.properties.example` to `application.properties` (same directory; gitignored for secrets).
+2. From the Neon dashboard → **Connection details**, set:
+   - `spring.datasource.url` — JDBC form: `jdbc:postgresql://HOST/DB?sslmode=require`  
+     (if Neon shows `postgresql://USER:PASSWORD@HOST/DB?sslmode=require`, drop the credentials from the URL and prefix with `jdbc:`)
+   - `spring.datasource.username` / `spring.datasource.password`
+   - JWT `jwt.secret` / `jwt.expiration`, and any other values your environment needs
+
+Hibernate `ddl-auto=update` creates/updates tables on first start.
 
 ## Run
 
 ```bash
-cd movie_verse_backend
+cd backend
 ./mvnw spring-boot:run
 ```
 
-On a typical setup the app listens on **port 8080** (see `Dockerfile` / Spring defaults). The Android app in `movie_verse_mobile` is preconfigured for `http://10.0.2.2:8080/` when using the emulator.
-
-## ML review service
-
-Review flows can call a Python prediction service. `MovieReviewService` posts to a URL such as `http://127.0.0.1:5001/predict` — align that port and path with your running Flask app in `movie_verse_ml` (default there is often **5000** unless you change it).
+On a typical setup the app listens on **port 8080** (see `Dockerfile` / Spring defaults).
 
 ## Docker
 
-Build and run with the provided `Dockerfile` (image exposes **8080**).
+Requires [Docker](https://docs.docker.com/get-docker/) with Compose. The API container talks to **Neon** (no local database container).
+
+```bash
+cd backend
+cp .env.example .env   # required — paste Neon JDBC URL, user, password
+docker compose up --build
+```
+
+| Service | URL / port |
+|---------|------------|
+| Backend API | `http://localhost:8080` |
+| Database | Neon PostgreSQL (from `.env`) |
+
+Useful commands:
+
+```bash
+docker compose up --build -d   # detached
+docker compose logs -f backend
+docker compose down
+```
+
+Build/run the image alone:
+
+```bash
+docker build -t movie-verse-backend .
+docker run --rm -p 8080:8080 \
+  -e SPRING_PROFILES_ACTIVE=docker \
+  -e SPRING_DATASOURCE_URL='jdbc:postgresql://ep-xxxx.region.aws.neon.tech/neondb?sslmode=require' \
+  -e SPRING_DATASOURCE_USERNAME=neondb_owner \
+  -e SPRING_DATASOURCE_PASSWORD=your-neon-password \
+  -e JWT_SECRET=change-me-to-a-long-random-secret-key \
+  movie-verse-backend
+```
 
 ## Tests
 
@@ -38,7 +72,7 @@ Build and run with the provided `Dockerfile` (image exposes **8080**).
 
 ## Layout
 
-- `src/main/java/dev/team08/movie_verse_backend/` — controllers, services, entities, security filters, DTOs
+- `src/main/java/dev/team08/backend/` — controllers, services, entities, security filters, DTOs
 - `src/main/resources/` — properties and static resources
 
-See the workspace root `README.md` for how this service connects to the web app, mobile client, and ML service.
+See the workspace root for how this service connects to the web frontend.

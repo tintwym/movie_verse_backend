@@ -1,0 +1,13 @@
+package dev.team08.backend;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class MovieVerseBackendApplicationTests {
+
+    @Test
+    void contextLoads() {
+    }
+
+}
