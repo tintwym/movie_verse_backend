@@ -18,4 +18,15 @@ public final class AuthHelper {
         }
         return user.getId();
     }
+
+    public static User requireAdmin(IUserService userService, String authorizationHeader) {
+        User user = userService.getUserFromToken(authorizationHeader);
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired token");
+        }
+        if (user.getRole() == null || !"Admin".equals(user.getRole().getName())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admin access required");
+        }
+        return user;
+    }
 }

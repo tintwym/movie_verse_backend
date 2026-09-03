@@ -42,6 +42,23 @@ public class UserService implements IUserService {
     public void initRoles() {
         createRoleIfNotExists("User");
         createRoleIfNotExists("Admin");
+        seedDefaultAdmin();
+    }
+
+    private void seedDefaultAdmin() {
+        if (userRepository.findByUsername("admin") != null) {
+            return;
+        }
+        Role adminRole = roleRepository.findByName("Admin");
+        if (adminRole == null) {
+            return;
+        }
+        User admin = new User();
+        admin.setUsername("admin");
+        admin.setEmail("admin@movieverse.local");
+        admin.setPassword(PasswordHashingUtility.hashPassword("admin123"));
+        admin.setRole(adminRole);
+        userRepository.save(admin);
     }
 
     private void createRoleIfNotExists(String roleName) {
@@ -196,7 +213,8 @@ public class UserService implements IUserService {
 
     @Override
     public AuthResponse loginUser(LoginUserRequest loginUserRequest) {
-        return loginWithRole(loginUserRequest, "User");
+        // Allow both User and Admin through the same login endpoint.
+        return loginAnyRole(loginUserRequest);
     }
 
     @Override
@@ -219,7 +237,19 @@ public class UserService implements IUserService {
             return null;
         }
         String token = jwtUtility.generateToken(user.getUsername());
-        return new AuthResponse(token);
+        return new AuthResponse(token, user.getRole().getName());
+    }
+
+    private AuthResponse loginAnyRole(LoginUserRequest request) {
+        User user = userRepository.findByUsername(request.getUsername());
+        if (user == null || user.getRole() == null) {
+            return null;
+        }
+        if (!PasswordHashingUtility.verifyPassword(request.getPassword(), user.getPassword())) {
+            return null;
+        }
+        String token = jwtUtility.generateToken(user.getUsername());
+        return new AuthResponse(token, user.getRole().getName());
     }
 
     @Override
@@ -230,17 +260,21 @@ public class UserService implements IUserService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired token");
         }
 
-        List<GenreRequest> genres = user.getFavoriteGenres().stream()
+        List<GenreRequest> genres = user.getFavoriteGenres() == null
+                ? List.of()
+                : user.getFavoriteGenres().stream()
                 .map(genre -> new GenreRequest(genre.getId(), genre.getName()))
                 .distinct()
                 .collect(Collectors.toList());
 
+        String roleName = user.getRole() != null ? user.getRole().getName() : "User";
         return new UserProfileRequest(
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
                 null,
                 user.getAvatar(),
+                roleName,
                 genres
         );
     }

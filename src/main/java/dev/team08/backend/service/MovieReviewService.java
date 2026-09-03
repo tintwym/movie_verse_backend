@@ -1,5 +1,6 @@
 package dev.team08.backend.service;
 
+import dev.team08.backend.dto.response.CommunityReviewResponse;
 import dev.team08.backend.entity.MovieReview;
 import dev.team08.backend.entity.User;
 import dev.team08.backend.entity.UserMovieInteraction;
@@ -79,8 +80,27 @@ public class MovieReviewService implements IMovieReviewService {
      * Get all reviews for a movie.
      */
     @Override
+    @Transactional(readOnly = true)
     public List<MovieReview> getReviewsByMovieId(Integer tmdbMovieId) {
         return movieReviewRepository.findByUserInteraction_TmdbMovieId(tmdbMovieId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CommunityReviewResponse> getCommunityReviews(Integer tmdbMovieId) {
+        return movieReviewRepository.findByUserInteraction_TmdbMovieId(tmdbMovieId).stream()
+                .map(review -> {
+                    String text = review.getEditedReviewText() != null && !review.getEditedReviewText().isBlank()
+                            ? review.getEditedReviewText()
+                            : review.getOriginalReviewText();
+                    Double rating = null;
+                    if (review.getUserInteraction() != null && review.getUserInteraction().getRating() != null) {
+                        rating = review.getUserInteraction().getRating().getRating();
+                    }
+                    String username = review.getUser() != null ? review.getUser().getUsername() : "Anonymous";
+                    return new CommunityReviewResponse(username, text, review.isEdited(), rating);
+                })
+                .toList();
     }
 
     /**

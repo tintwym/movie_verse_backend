@@ -12,6 +12,7 @@ public class UserProfileRequest {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
     private String avatar;
+    private String role;
     private List<GenreRequest> FavouriteGenres;
 
     public UserProfileRequest(UUID id, String username, String email, String password, String avatar, List<GenreRequest> FavouriteGenres) {
@@ -21,6 +22,11 @@ public class UserProfileRequest {
         this.password = password;
         this.avatar = avatar;
         this.FavouriteGenres = FavouriteGenres;
+    }
+
+    public UserProfileRequest(UUID id, String username, String email, String password, String avatar, String role, List<GenreRequest> FavouriteGenres) {
+        this(id, username, email, password, avatar, FavouriteGenres);
+        this.role = role;
     }
 
     public UUID getId() {
@@ -69,6 +75,14 @@ public class UserProfileRequest {
 
     public void setAvatar(String avatar) {
         this.avatar = avatar;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 
 }

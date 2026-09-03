@@ -47,11 +47,11 @@ public class MovieReviewApiController {
     }
 
     /**
-     * ✅ Get all reviews for a movie.
+     * ✅ Get all reviews for a movie (safe public DTO — no password/entity leaks).
      */
     @GetMapping("/{tmdb_movie_id}")
     public ResponseEntity<?> getReviewsForMovie(@PathVariable Integer tmdb_movie_id) {
-        return ResponseEntity.ok(movieReviewService.getReviewsByMovieId(tmdb_movie_id));
+        return ResponseEntity.ok(movieReviewService.getCommunityReviews(tmdb_movie_id));
     }
 
     /**
